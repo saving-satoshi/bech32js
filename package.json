@@ -1,0 +1,19 @@
+{
+  "name": "@savingsatoshi/bech32js",
+  "version": "1.0.0",
+  "description": "bech32 module for Saving Satoshi code challenges",
+  "main": "bech32.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saving-satoshi/bech32js.git"
+  },
+  "author": "Matthew Zipkin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/saving-satoshi/bech32js/issues"
+  },
+  "homepage": "https://github.com/saving-satoshi/bech32js#readme"
+}

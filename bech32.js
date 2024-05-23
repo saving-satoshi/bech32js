@@ -53,25 +53,25 @@ exports.polymod = (values) => {
   return chk;
 }
 
-exports.hrpExpand = (hrp) => {
+exports.hrpExpand = (humanReadablePrefix) => {
   var ret = [];
   var p;
-  for (p = 0; p < hrp.length; ++p) {
-    ret.push(hrp.charCodeAt(p) >> 5);
+  for (p = 0; p < humanReadablePrefix.length; ++p) {
+    ret.push(humanReadablePrefix.charCodeAt(p) >> 5);
   }
   ret.push(0);
-  for (p = 0; p < hrp.length; ++p) {
-    ret.push(hrp.charCodeAt(p) & 31);
+  for (p = 0; p < humanReadablePrefix.length; ++p) {
+    ret.push(humanReadablePrefix.charCodeAt(p) & 31);
   }
   return ret;
 }
 
-exports.verifyChecksum = (hrp, data, enc) => {
-  return exports.polymod(exports.hrpExpand(hrp).concat(data)) === exports.getEncodingConst(enc);
+exports.verifyChecksum = (humanReadablePrefix, data, enc) => {
+  return exports.polymod(exports.hrpExpand(humanReadablePrefix).concat(data)) === exports.getEncodingConst(enc);
 }
 
-exports.createChecksum = (hrp, data, enc) => {
-  var values = exports.hrpExpand(hrp).concat(data).concat([0, 0, 0, 0, 0, 0]);
+exports.createChecksum = (humanReadablePrefix, data, enc) => {
+  var values = exports.hrpExpand(humanReadablePrefix).concat(data).concat([0, 0, 0, 0, 0, 0]);
   var mod = exports.polymod(values) ^ exports.getEncodingConst(enc);
   var ret = [];
   for (var p = 0; p < 6; ++p) {
@@ -80,9 +80,9 @@ exports.createChecksum = (hrp, data, enc) => {
   return ret;
 }
 
-exports.bech32_encode = (hrp, data, enc) => {
-  var combined = data.concat(exports.createChecksum(hrp, data, enc));
-  var ret = hrp + '1';
+exports.bech32_encode = (humanReadablePrefix, data, enc) => {
+  var combined = data.concat(exports.createChecksum(humanReadablePrefix, data, enc));
+  var ret = humanReadablePrefix + '1';
   for (var p = 0; p < combined.length; ++p) {
     ret += CHARSET.charAt(combined[p]);
   }
@@ -112,7 +112,7 @@ exports.bech32_decode = (bechString, enc) => {
   if (pos < 1 || pos + 7 > bechString.length || bechString.length > 90) {
     return null;
   }
-  var hrp = bechString.substring(0, pos);
+  var humanReadablePrefix = bechString.substring(0, pos);
   var data = [];
   for (p = pos + 1; p < bechString.length; ++p) {
     var d = CHARSET.indexOf(bechString.charAt(p));
@@ -121,10 +121,10 @@ exports.bech32_decode = (bechString, enc) => {
     }
     data.push(d);
   }
-  if (!exports.verifyChecksum(hrp, data, enc)) {
+  if (!exports.verifyChecksum(humanReadablePrefix, data, enc)) {
     return null;
   }
-  return {hrp: hrp, data: data.slice(0, data.length - 6)};
+  return {hrp: humanReadablePrefix, data: data.slice(0, data.length - 6)};
 }
 
 
@@ -155,14 +155,14 @@ exports.convertbits = (data, frombits, tobits, pad) => {
   return ret;
 }
 
-exports.decode = (hrp, addr) => {
+exports.decode = (humanReadablePrefix, addr) => {
   var bech32m = false;
   var dec = exports.bech32_decode(addr, encodings.BECH32);
   if (dec === null) {
     dec = exports.bech32_decode(addr, encodings.BECH32M);
     bech32m = true;
   }
-  if (dec === null || dec.hrp !== hrp || dec.data.length < 1 || dec.data[0] > 16) {
+  if (dec === null || dec.hrp !== humanReadablePrefix || dec.data.length < 1 || dec.data[0] > 16) {
     return null;
   }
   var res = exports.convertbits(dec.data.slice(1), 5, 8, false);
@@ -181,13 +181,13 @@ exports.decode = (hrp, addr) => {
   return {version: dec.data[0], program: res};
 }
 
-exports.encode = (hrp, version, program) => {
+exports.encode = (humanReadablePrefix, version, program) => {
   var enc = encodings.BECH32;
   if (version > 0) {
     enc = encodings.BECH32M;
   }
-  var ret = exports.bech32_encode(hrp, [version].concat(exports.convertbits(program, 8, 5, true)), enc);
-  if (exports.decode(hrp, ret) === null) {
+  var ret = exports.bech32_encode(humanReadablePrefix, [version].concat(exports.convertbits(program, 8, 5, true)), enc);
+  if (exports.decode(humanReadablePrefix, ret) === null) {
     return null;
   }
   return ret;
